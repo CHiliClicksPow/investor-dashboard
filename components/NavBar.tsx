@@ -15,14 +15,20 @@ export default function NavBar() {
 
   return (
     <div style={styles.bar}>
-      <div style={styles.left}>
+      <div style={styles.left} className="pow-nav-links">
         <img src="/logo.png" alt="Pitch Our Way" style={styles.logo} />
         <Link href="/home" style={styles.link}>Home</Link>
         <Link href="/deals" style={styles.link}>Deals</Link>
         <Link href="/deals/new" style={styles.link}>New Deal</Link>
         <Link href="/import-investors" style={styles.link}>Import Investors</Link>
+        <Link href="/investors/new" style={styles.link}>Add Investor</Link>
       </div>
       <button onClick={signOut} style={styles.signOut}>Sign out</button>
+      <style>{`
+        @media (max-width: 768px) {
+          .pow-nav-links { gap: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -30,16 +36,18 @@ export default function NavBar() {
 const styles: Record<string, React.CSSProperties> = {
   bar: {
     display: 'flex',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '14px 24px',
+    rowGap: 10,
+    padding: '14px 16px',
     background: '#0f172a',
     fontFamily: 'system-ui, sans-serif',
   },
-  left: { display: 'flex', alignItems: 'center', gap: 20 },
+  left: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20, rowGap: 10 },
   brand: { color: '#fff', fontWeight: 700, fontSize: 15, marginRight: 8 },
-  logo: { height: 36, width: 'auto', marginRight: 8, filter: 'brightness(0) invert(1)' },
-  link: { color: '#cbd5e1', textDecoration: 'none', fontSize: 14 },
+  logo: { height: 32, width: 'auto', marginRight: 4, filter: 'brightness(0) invert(1)' },
+  link: { color: '#cbd5e1', textDecoration: 'none', fontSize: 14, whiteSpace: 'nowrap' },
   signOut: {
     background: 'transparent',
     border: '1px solid #475569',
@@ -48,5 +56,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '6px 12px',
     fontSize: 13,
     cursor: 'pointer',
+    flexShrink: 0,
   },
 };
