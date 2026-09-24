@@ -39,6 +39,29 @@ export default function DealDetailPage() {
     setMatching(false);
   }
 
+  function downloadCsv() {
+    const cols = ['category', 'match_score', 'investor_name', 'type', 'contact_name', 'email', 'phone', 'website', 'linkedin', 'country', 'industry_focus', 'stages', 'min_investment', 'max_investment', 'rationale'];
+    const header = cols.join(',');
+    const escape = (v: any) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = matches.map((m) =>
+      [m.category, m.match_score, m.investors.investor_name, m.investors.type, m.investors.contact_name,
+       m.investors.email, m.investors.phone, m.investors.website, m.investors.linkedin, m.investors.country,
+       m.investors.industry_focus, m.investors.stages, m.investors.min_investment, m.investors.max_investment,
+       m.rationale].map(escape).join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deal.company_name.replace(/[^a-z0-9]/gi, '_')}_matched_investors.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) return <div><NavBar /><p style={{ padding: 24 }}>Loading…</p></div>;
   if (!deal) return <div><NavBar /><p style={{ padding: 24 }}>Deal not found.</p></div>;
 
@@ -58,16 +81,29 @@ export default function DealDetailPage() {
           {deal.funding_ask ? ` · Asking $${Number(deal.funding_ask).toLocaleString()}` : ''}
         </p>
 
-        <button
-          onClick={runMatching}
-          disabled={matching}
-          style={{
-            background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8,
-            padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 28,
-          }}
-        >
-          {matching ? 'Matching…' : matches.length ? 'Re-run matching' : 'Find matching investors'}
-        </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+          <button
+            onClick={runMatching}
+            disabled={matching}
+            style={{
+              background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {matching ? 'Matching…' : matches.length ? 'Re-run matching' : 'Find matching investors'}
+          </button>
+          {matches.length > 0 && (
+            <button
+              onClick={downloadCsv}
+              style={{
+                background: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8,
+                padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Download {matches.length} matches (CSV)
+            </button>
+          )}
+        </div>
 
         {matches.length === 0 && !matching && (
           <p style={{ color: '#94a3b8', fontSize: 14 }}>
