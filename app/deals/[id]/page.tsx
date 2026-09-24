@@ -12,6 +12,9 @@ export default function DealDetailPage() {
   const [deal, setDeal] = useState<any>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [matching, setMatching] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [analyzeSummary, setAnalyzeSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadDeal() {
@@ -37,6 +40,29 @@ export default function DealDetailPage() {
     const { error } = await supabase.rpc('match_investors_for_deal', { p_deal_id: id });
     if (!error) await loadMatches();
     setMatching(false);
+  }
+
+  async function analyzeWithAI() {
+    setAnalyzing(true);
+    setAnalyzeError(null);
+    setAnalyzeSummary(null);
+    try {
+      const res = await fetch('/api/analyze-deal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analysis failed.');
+      setAnalyzeSummary(
+        `AI read the deck/model and re-scored ${data.aiReviewedCount} of ${data.candidatePoolSize} candidate investors based on actual thesis fit.`
+      );
+      await Promise.all([loadDeal(), loadMatches()]);
+    } catch (err: any) {
+      setAnalyzeError(err.message);
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   function downloadCsv() {
@@ -103,7 +129,54 @@ export default function DealDetailPage() {
               Download {matches.length} matches (CSV)
             </button>
           )}
+          {(deal.pitch_deck_path || deal.financial_model_path || matches.length > 0) && (
+            <button
+              onClick={analyzeWithAI}
+              disabled={analyzing}
+              style={{
+                background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8,
+                padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {analyzing ? 'AI is reading & matching…' : 'Analyze with AI'}
+            </button>
+          )}
         </div>
+
+        {analyzeSummary && <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 16 }}>{analyzeSummary}</p>}
+        {analyzeError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 16 }}>{analyzeError}</p>}
+
+        {deal.extracted_data && (
+          <div style={{ border: '1px solid #dbeafe', background: '#eff6ff', borderRadius: 10, padding: 18, marginBottom: 28 }}>
+            <h2 style={{ fontSize: 15, marginBottom: 10, color: '#1e3a8a' }}>AI Company Brief</h2>
+            {deal.extracted_data.one_liner && (
+              <p style={{ fontSize: 14, color: '#0f172a', marginBottom: 10 }}>{deal.extracted_data.one_liner}</p>
+            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 18px', fontSize: 13, color: '#334155', marginBottom: 10 }}>
+              {deal.extracted_data.sector && <span><strong>Sector:</strong> {deal.extracted_data.sector}</span>}
+              {deal.extracted_data.stage && <span><strong>Stage:</strong> {deal.extracted_data.stage}</span>}
+              {deal.extracted_data.geography && <span><strong>Geography:</strong> {deal.extracted_data.geography}</span>}
+              {deal.extracted_data.funding_ask && (
+                <span><strong>Ask:</strong> ${Number(deal.extracted_data.funding_ask).toLocaleString()}</span>
+              )}
+            </div>
+            {Array.isArray(deal.extracted_data.key_highlights) && deal.extracted_data.key_highlights.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <strong style={{ fontSize: 13, color: '#1e3a8a' }}>Traction / highlights:</strong>
+                <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 13, color: '#334155' }}>
+                  {deal.extracted_data.key_highlights.map((h: string, i: number) => (
+                    <li key={i} style={{ marginBottom: 3 }}>{h}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {deal.extracted_data.thesis_summary && (
+              <p style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', marginTop: 8 }}>
+                {deal.extracted_data.thesis_summary}
+              </p>
+            )}
+          </div>
+        )}
 
         {matches.length === 0 && !matching && (
           <p style={{ color: '#94a3b8', fontSize: 14 }}>
