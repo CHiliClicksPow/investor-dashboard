@@ -82,8 +82,8 @@ export default function ResetPasswordPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', fontFamily: 'system-ui, sans-serif' },
-  card: { width: 380, background: '#fff', borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' },
+  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', fontFamily: 'system-ui, sans-serif', padding: 16, boxSizing: 'border-box' },
+  card: { width: '100%', maxWidth: 380, background: '#fff', borderRadius: 12, padding: 28, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', boxSizing: 'border-box' },
   title: { margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' },
   subtitle: { margin: '4px 0 24px', color: '#64748b', fontSize: 14 },
   label: { fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 },
