@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-// @ts-ignore - no bundled types for this CJS module
-import pdfParse from 'pdf-parse';
 import * as XLSX from 'xlsx';
 
 export const runtime = 'nodejs';
@@ -66,6 +64,9 @@ export async function POST(req: Request) {
         if (!dlErr && file) {
           try {
             const buf = Buffer.from(await file.arrayBuffer());
+            // @ts-ignore - loaded dynamically at runtime to avoid a known
+            // build-time issue with this package's top-level debug code.
+            const { default: pdfParse } = await import('pdf-parse');
             const parsed = await pdfParse(buf);
             deckText = parsed.text.slice(0, 15000);
           } catch {
