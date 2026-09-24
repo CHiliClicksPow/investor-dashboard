@@ -19,6 +19,7 @@ export default function NewDealPage() {
   const [deckFile, setDeckFile] = useState<File | null>(null);
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,8 +48,7 @@ export default function NewDealPage() {
 
       if (insertError) throw insertError;
 
-      // Upload files if provided (optional — kept for reference, not yet
-      // auto-analyzed; that comes with the AI matching step later).
+      let analyzed = false;
       if (deckFile) {
         const path = `${deal.id}/${deckFile.name}`;
         const { error: upErr } = await supabase.storage.from('pitch-decks').upload(path, deckFile);
@@ -58,6 +58,22 @@ export default function NewDealPage() {
         const path = `${deal.id}/${modelFile.name}`;
         const { error: upErr } = await supabase.storage.from('financial-models').upload(path, modelFile);
         if (!upErr) await supabase.from('deals').update({ financial_model_path: path }).eq('id', deal.id);
+      }
+
+      if (deckFile || modelFile) {
+        setSaving(false);
+        setAnalyzing(true);
+        try {
+          await fetch('/api/analyze-deal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dealId: deal.id }),
+          });
+          analyzed = true;
+        } catch {
+          // Non-fatal — they can click "Analyze with AI" again from the deal page.
+        }
+        setAnalyzing(false);
       }
 
       router.push(`/deals/${deal.id}`);
@@ -73,9 +89,9 @@ export default function NewDealPage() {
       <div style={{ maxWidth: 640, margin: '40px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
         <h1 style={{ fontSize: 22, marginBottom: 4 }}>New Deal</h1>
         <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
-          Fill in what you know — sector, stage, geography and the funding ask are what
-          drive the investor match. Files are optional for now and just get stored
-          alongside the deal.
+          Fill in what you know. If you attach a pitch deck (PDF) or financial model
+          (Excel), AI reads it automatically and writes a brief — sector, stage, traction,
+          funding ask — right on the deal page, filling in anything you left blank.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -109,18 +125,18 @@ export default function NewDealPage() {
             <textarea style={{ ...inputStyle, minHeight: 90 }} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
 
-          <Field label="Pitch deck (optional)">
+          <Field label="Pitch deck (PDF read automatically; PPTX stored but not yet read)">
             <input type="file" accept=".pdf,.ppt,.pptx" onChange={(e) => setDeckFile(e.target.files?.[0] || null)} />
           </Field>
 
-          <Field label="Financial model (optional)">
+          <Field label="Financial model (Excel/CSV, read automatically)">
             <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setModelFile(e.target.files?.[0] || null)} />
           </Field>
 
           {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
 
-          <button type="submit" disabled={saving} style={buttonStyle}>
-            {saving ? 'Saving…' : 'Create deal & find matches'}
+          <button type="submit" disabled={saving || analyzing} style={buttonStyle}>
+            {saving ? 'Saving…' : analyzing ? 'Reading pitch deck & writing brief…' : 'Create deal & find matches'}
           </button>
         </form>
       </div>
