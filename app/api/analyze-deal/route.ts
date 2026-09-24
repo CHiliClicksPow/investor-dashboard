@@ -83,8 +83,6 @@ async function callAI(prompt: string): Promise<{ text: string; provider: string 
 
   throw new Error(`All AI providers failed. ${errors.join(' | ')}`);
 }
-  return data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
-}
 
 function extractJsonObject(text: string): any {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
