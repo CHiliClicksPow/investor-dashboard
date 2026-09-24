@@ -87,20 +87,20 @@ export default function NewDealPage() {
             <input style={inputStyle} value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} placeholder="What the company does, in one sentence" />
           </Field>
 
-          <div style={{ display: 'flex', gap: 16 }}>
-            <Field label="Sector" style={{ flex: 1 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+            <Field label="Sector" style={{ flex: '1 1 200px' }}>
               <input style={inputStyle} value={sector} onChange={(e) => setSector(e.target.value)} placeholder="e.g. Fintech" />
             </Field>
-            <Field label="Stage" style={{ flex: 1 }}>
+            <Field label="Stage" style={{ flex: '1 1 200px' }}>
               <input style={inputStyle} value={stage} onChange={(e) => setStage(e.target.value)} placeholder="e.g. Seed, Series A" />
             </Field>
           </div>
 
-          <div style={{ display: 'flex', gap: 16 }}>
-            <Field label="Geography" style={{ flex: 1 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+            <Field label="Geography" style={{ flex: '1 1 200px' }}>
               <input style={inputStyle} value={geography} onChange={(e) => setGeography(e.target.value)} placeholder="e.g. India, UAE" />
             </Field>
-            <Field label="Funding ask (USD)" style={{ flex: 1 }}>
+            <Field label="Funding ask (USD)" style={{ flex: '1 1 200px' }}>
               <input style={inputStyle} type="number" value={fundingAsk} onChange={(e) => setFundingAsk(e.target.value)} placeholder="e.g. 500000" />
             </Field>
           </div>
