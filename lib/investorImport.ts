@@ -59,7 +59,9 @@ export function parseWorkbook(buffer: ArrayBuffer): InvestorRecord[] {
   const wb = XLSX.read(buffer, { type: 'array' });
   const out: InvestorRecord[] = [];
 
+  const handledSheets = new Set<string>();
   const push = (rec: Partial<InvestorRecord>, sheet: string) => {
+    handledSheets.add(sheet);
     if (!rec.investor_name) return;
     out.push({ source_sheets: [sheet], ...rec } as InvestorRecord);
   };
@@ -334,6 +336,75 @@ export function parseWorkbook(buffer: ArrayBuffer): InvestorRecord[] {
           portfolio_companies: s(portfolio) || null,
         },
         bigSheet
+      );
+    }
+  }
+
+  // --- Generic fallback: any sheet not already handled above, matched by
+  // recognizable column headers (e.g. a simple new sheet with columns like
+  // "Investor", "Sector", "City", "Country", "Website", "LinkedIn", "Contact Email"). ---
+  const normalizeHeader = (h: any) => s(h).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const HEADER_MAP: Record<string, keyof InvestorRecord> = {
+    investor: 'investor_name', investorname: 'investor_name', investorfundname: 'investor_name',
+    fundname: 'investor_name', fund: 'investor_name', name: 'investor_name', company: 'investor_name',
+    contactname: 'contact_name', contact: 'contact_name', poc: 'contact_name',
+    type: 'type', investortype: 'type',
+    sector: 'industry_focus', sectors: 'industry_focus', industry: 'industry_focus', industryfocus: 'industry_focus',
+    stage: 'stages', stages: 'stages',
+    city: 'city', country: 'country',
+    website: 'website', linkedin: 'linkedin',
+    contactemail: 'email', email: 'email', emailid: 'email',
+    phone: 'phone', contactphone: 'phone', mobilenumber: 'phone', phonenumber: 'phone',
+    mininvestment: 'min_investment', minticket: 'min_investment', minticketsize: 'min_investment',
+    maxinvestment: 'max_investment', maxticket: 'max_investment', maxticketsize: 'max_investment', ticketsize: 'max_investment',
+    geography: 'geographic_focus', geographicfocus: 'geographic_focus', geographyfocus: 'geographic_focus',
+    requirements: 'requirements', description: 'description', notes: 'description', thesis: 'description',
+    investmentthesis: 'description', comments: 'description', anycomments: 'description',
+    portfoliocompanies: 'portfolio_companies',
+  };
+
+  for (const sheetName of wb.SheetNames) {
+    if (handledSheets.has(sheetName)) continue;
+    const rows = rowsOf(wb.Sheets[sheetName]);
+    if (!rows.length) continue;
+
+    const headerRow = rows[0] || [];
+    const colMap: Partial<Record<keyof InvestorRecord, number>> = {};
+    headerRow.forEach((h: any, idx: number) => {
+      const field = HEADER_MAP[normalizeHeader(h)];
+      if (field && colMap[field] === undefined) colMap[field] = idx;
+    });
+    if (colMap.investor_name === undefined) continue; // doesn't look like an investor sheet — skip silently
+
+    for (const r of rows.slice(1)) {
+      if (!r || !r.some((c: any) => c !== null && c !== '')) continue;
+      const get = (field: keyof InvestorRecord) => {
+        const idx = colMap[field];
+        return idx !== undefined ? r[idx] : null;
+      };
+      const name = s(get('investor_name'));
+      if (!name) continue;
+      push(
+        {
+          investor_name: name,
+          contact_name: s(get('contact_name')) || null,
+          type: s(get('type')) || null,
+          industry_focus: s(get('industry_focus')) || null,
+          stages: s(get('stages')) || null,
+          city: s(get('city')) || null,
+          country: s(get('country')) || null,
+          website: s(get('website')) || null,
+          linkedin: s(get('linkedin')) || null,
+          email: cleanEmail(get('email')) || null,
+          phone: s(get('phone')) || null,
+          min_investment: num(get('min_investment')),
+          max_investment: num(get('max_investment')),
+          geographic_focus: s(get('geographic_focus')) || null,
+          requirements: s(get('requirements')) || null,
+          description: s(get('description')) || null,
+          portfolio_companies: s(get('portfolio_companies')) || null,
+        },
+        sheetName
       );
     }
   }
