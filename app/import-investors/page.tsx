@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { parseWorkbook, dedupeRecords, InvestorRecord } from '@/lib/investorImport';
+import NavBar from '@/components/NavBar';
 
 const BATCH_SIZE = 500;
 
@@ -86,12 +87,16 @@ export default function ImportInvestorsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
+    <div>
+      <NavBar />
+      <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>Import Investors</h1>
       <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
-        Upload your investor list (the same Excel workbook, any number of sheets).
-        Everything is read and matched in your browser, then saved to the shared
-        investor database — nothing is sent anywhere except your own Supabase project.
+        Upload your investor list (the same Excel workbook, any number of sheets, or a
+        simple new sheet with columns like Investor, Sector, City, Country, Website,
+        LinkedIn, Contact Email). Everything is read and matched in your browser, then
+        saved to the shared investor database — nothing is sent anywhere except your own
+        Supabase project.
       </p>
 
       <input
@@ -125,6 +130,7 @@ export default function ImportInvestorsPage() {
       {summary && (
         <p style={{ marginTop: 20, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>{summary}</p>
       )}
+      </div>
     </div>
   );
 }
