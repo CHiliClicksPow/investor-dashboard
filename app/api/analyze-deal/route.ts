@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 async function callGemini(prompt: string, attempt = 1): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -33,6 +34,55 @@ async function callGemini(prompt: string, attempt = 1): Promise<string> {
   }
 
   const data = await res.json();
+  return data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+}
+
+async function callGroq(prompt: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY is not configured on the server.');
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq API error (${res.status}): ${errText.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || '';
+}
+
+// Tries each configured AI provider in order, falling back to the next one
+// if the previous fails (e.g. temporary overload) — so a single provider
+// having a bad day never blocks the whole feature.
+async function callAI(prompt: string): Promise<{ text: string; provider: string }> {
+  const errors: string[] = [];
+
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      return { text: await callGemini(prompt), provider: 'Gemini' };
+    } catch (e: any) {
+      errors.push(e.message);
+    }
+  }
+
+  if (process.env.GROQ_API_KEY) {
+    try {
+      return { text: await callGroq(prompt), provider: 'Groq' };
+    } catch (e: any) {
+      errors.push(e.message);
+    }
+  }
+
+  throw new Error(`All AI providers failed. ${errors.join(' | ')}`);
+}
   return data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
 }
 
@@ -131,7 +181,7 @@ Based on everything above, respond with ONLY a raw JSON object (no markdown, no 
   "thesis_summary": "a 2-3 sentence summary of why an investor might find this compelling, written the way an investor's own thesis note would read"
 }`;
 
-    const extractionRaw = await callGemini(extractionPrompt);
+    const { text: extractionRaw, provider: extractionProvider } = await callAI(extractionPrompt);
     const extracted = extractJsonObject(extractionRaw);
 
     const updates: Record<string, any> = { extracted_data: extracted };
@@ -181,7 +231,7 @@ ${investorList}
 For EACH investor listed above, judge how genuinely well their stated thesis/focus fits this specific deal. Respond with ONLY a raw JSON array (no markdown), one object per investor, in this exact shape:
 [{"id": "<the id shown in brackets, exactly as given>", "score": <0-100 integer>, "rationale": "<one sentence, specific to this deal, max 25 words>"}]`;
 
-      const rankingRaw = await callGemini(rankingPrompt);
+      const { text: rankingRaw } = await callAI(rankingPrompt);
       const rankings = extractJsonArray(rankingRaw) as { id: string; score: number; rationale: string }[];
 
       for (const r of rankings) {
@@ -197,7 +247,13 @@ For EACH investor listed above, judge how genuinely well their stated thesis/foc
       }
     }
 
-    return NextResponse.json({ success: true, extracted, aiReviewedCount, candidatePoolSize: candidates?.length || 0 });
+    return NextResponse.json({
+      success: true,
+      extracted,
+      aiReviewedCount,
+      candidatePoolSize: candidates?.length || 0,
+      provider: extractionProvider,
+    });
   } catch (err: any) {
     console.error('analyze-deal error:', err);
     return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 500 });
