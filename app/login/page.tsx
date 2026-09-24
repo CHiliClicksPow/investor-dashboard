@@ -32,7 +32,7 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    setInfo(`A 6-digit code was sent to ${email}. Enter it below.`);
+    setInfo(`A sign-in email was sent to ${email}. Open it and click the "Sign in" link — that logs you in directly. (If you ever see a 6-digit code instead of a link, you can type it below.)`);
     setMode('otp-verify');
   }
 
@@ -113,7 +113,7 @@ export default function LoginPage() {
 
             {mode === 'otp-verify' && (
               <>
-                <label style={styles.label}>6-digit code</label>
+                <label style={styles.label}>6-digit code (only if the email showed one instead of a link)</label>
                 <input
                   style={{ ...styles.input, letterSpacing: 4, fontSize: 20, textAlign: 'center' }}
                   value={code}
@@ -129,7 +129,7 @@ export default function LoginPage() {
             {error && <p style={styles.error}>{error}</p>}
 
             <button style={styles.button} type="submit" disabled={loading}>
-              {loading ? 'Please wait…' : mode === 'otp-request' ? 'Send code' : 'Verify & sign in'}
+              {loading ? 'Please wait…' : mode === 'otp-request' ? 'Send sign-in email' : 'Verify code / Refresh after clicking link'}
             </button>
 
             {mode === 'otp-verify' && (
