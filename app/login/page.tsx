@@ -46,7 +46,7 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    router.push('/deals');
+    router.push('/home');
   }
 
   async function handlePasswordSubmit(e: React.FormEvent) {
@@ -67,7 +67,7 @@ export default function LoginPage() {
       setMode('otp-request');
       return;
     }
-    router.push('/deals');
+    router.push('/home');
   }
 
   return (
