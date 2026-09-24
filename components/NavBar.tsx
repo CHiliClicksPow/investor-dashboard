@@ -16,7 +16,7 @@ export default function NavBar() {
   return (
     <div style={styles.bar}>
       <div style={styles.left}>
-        <span style={styles.brand}>Pitch Our Way</span>
+        <img src="/logo.png" alt="Pitch Our Way" style={styles.logo} />
         <Link href="/deals" style={styles.link}>Deals</Link>
         <Link href="/deals/new" style={styles.link}>New Deal</Link>
         <Link href="/import-investors" style={styles.link}>Import Investors</Link>
@@ -37,6 +37,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   left: { display: 'flex', alignItems: 'center', gap: 20 },
   brand: { color: '#fff', fontWeight: 700, fontSize: 15, marginRight: 8 },
+  logo: { height: 36, width: 'auto', marginRight: 8 },
   link: { color: '#cbd5e1', textDecoration: 'none', fontSize: 14 },
   signOut: {
     background: 'transparent',
