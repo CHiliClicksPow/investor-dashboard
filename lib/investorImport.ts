@@ -55,8 +55,10 @@ function findSheet(wb: XLSX.WorkBook, matcher: (name: string) => boolean): strin
  * not yet deduplicated). Mirrors the sheet-by-sheet mapping worked out
  * against the original file.
  */
-export function parseWorkbook(buffer: ArrayBuffer): InvestorRecord[] {
-  const wb = XLSX.read(buffer, { type: 'array' });
+export function parseWorkbook(input: ArrayBuffer | string): InvestorRecord[] {
+  const wb = typeof input === 'string'
+    ? XLSX.read(input, { type: 'string' })
+    : XLSX.read(input, { type: 'array' });
   const out: InvestorRecord[] = [];
 
   const handledSheets = new Set<string>();
@@ -357,6 +359,8 @@ export function parseWorkbook(buffer: ArrayBuffer): InvestorRecord[] {
     phone: 'phone', contactphone: 'phone', mobilenumber: 'phone', phonenumber: 'phone',
     mininvestment: 'min_investment', minticket: 'min_investment', minticketsize: 'min_investment',
     maxinvestment: 'max_investment', maxticket: 'max_investment', maxticketsize: 'max_investment', ticketsize: 'max_investment',
+    amount: 'max_investment', investmentamount: 'max_investment', ticketamount: 'max_investment',
+    checksize: 'max_investment', investmentsize: 'max_investment', ticket: 'max_investment',
     geography: 'geographic_focus', geographicfocus: 'geographic_focus', geographyfocus: 'geographic_focus',
     requirements: 'requirements', description: 'description', notes: 'description', thesis: 'description',
     investmentthesis: 'description', comments: 'description', anycomments: 'description',
