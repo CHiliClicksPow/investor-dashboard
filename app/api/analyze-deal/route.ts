@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
-async function callGemini(prompt: string): Promise<string> {
+async function callGemini(prompt: string, attempt = 1): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured on the server.');
 
@@ -22,6 +22,13 @@ async function callGemini(prompt: string): Promise<string> {
 
   if (!res.ok) {
     const errText = await res.text();
+    // Gemini's free tier occasionally returns 503 (overloaded) or 429 (rate
+    // limited) — these are transient, so retry a couple of times with a
+    // short delay before giving up.
+    if ((res.status === 503 || res.status === 429) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, attempt * 2000));
+      return callGemini(prompt, attempt + 1);
+    }
     throw new Error(`Gemini API error (${res.status}): ${errText.slice(0, 300)}`);
   }
 
