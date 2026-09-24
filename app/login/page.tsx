@@ -73,7 +73,7 @@ export default function LoginPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Pitch Our Way</h1>
+        <img src="/logo.png" alt="Pitch Our Way" style={{ height: 40, width: 'auto', marginBottom: 8 }} />
         <p style={styles.subtitle}>Investor Matching Platform</p>
 
         {(mode === 'otp-request' || mode === 'otp-verify') && (
