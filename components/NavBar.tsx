@@ -17,6 +17,7 @@ export default function NavBar() {
     <div style={styles.bar}>
       <div style={styles.left}>
         <img src="/logo.png" alt="Pitch Our Way" style={styles.logo} />
+        <Link href="/home" style={styles.link}>Home</Link>
         <Link href="/deals" style={styles.link}>Deals</Link>
         <Link href="/deals/new" style={styles.link}>New Deal</Link>
         <Link href="/import-investors" style={styles.link}>Import Investors</Link>
