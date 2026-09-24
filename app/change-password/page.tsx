@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import NavBar from '@/components/NavBar';
 
-export default function ResetPasswordPage() {
+export default function ChangePasswordPage() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const expired = searchParams.get('expired') === '1';
+
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +20,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(false);
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
@@ -27,9 +32,6 @@ export default function ResetPasswordPage() {
     }
 
     setSaving(true);
-    // Supabase automatically turns the emailed link's token into a
-    // temporary session when this page loads, so updateUser works here
-    // without the user needing to already be signed in.
     const { error } = await supabase.auth.updateUser({
       password,
       data: { password_updated_at: new Date().toISOString() },
@@ -41,54 +43,70 @@ export default function ResetPasswordPage() {
       return;
     }
     setSuccess(true);
-    setTimeout(() => router.push('/home'), 1200);
+    setPassword('');
+    setConfirm('');
+    if (expired) {
+      setTimeout(() => router.push('/home'), 1200);
+    }
   }
 
   return (
-    <div style={styles.page}>
-      <form onSubmit={handleSubmit} style={styles.card}>
-        <h1 style={styles.title}>Set a new password</h1>
-        <p style={styles.subtitle}>For investment@pitchourway.com</p>
+    <div>
+      <NavBar />
+      <div style={{ maxWidth: 420, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
+        <h1 style={{ fontSize: 22, marginBottom: 4 }}>Change Password</h1>
 
-        <label style={styles.label}>New password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-          minLength={8}
-          required
-        />
+        {expired ? (
+          <p style={{ background: '#fef3c7', color: '#92400e', fontSize: 13, padding: '10px 14px', borderRadius: 8, marginBottom: 20 }}>
+            Your password is 30 days old — for security, please set a new one to continue.
+          </p>
+        ) : (
+          <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
+            Set a new password for investment@pitchourway.com. You can use this instead of
+            the email code next time you sign in. Passwords must be renewed every 30 days.
+          </p>
+        )}
 
-        <label style={styles.label}>Confirm password</label>
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          style={styles.input}
-          minLength={8}
-          required
-        />
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              New password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
+              minLength={8}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Confirm new password
+            </label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
+              minLength={8}
+              required
+            />
+          </div>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>Password set — redirecting…</p>}
+          {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
+          {success && <p style={{ color: '#16a34a', fontSize: 13 }}>Password updated successfully.</p>}
 
-        <button type="submit" disabled={saving} style={styles.button}>
-          {saving ? 'Saving…' : 'Set password'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={saving}
+            style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+          >
+            {saving ? 'Saving…' : 'Update password'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', fontFamily: 'system-ui, sans-serif' },
-  card: { width: 380, background: '#fff', borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' },
-  title: { margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' },
-  subtitle: { margin: '4px 0 24px', color: '#64748b', fontSize: 14 },
-  label: { fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 },
-  input: { border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 14 },
-  button: { background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  error: { color: '#dc2626', fontSize: 13, marginBottom: 12 },
-  success: { color: '#16a34a', fontSize: 13, marginBottom: 12 },
-};
