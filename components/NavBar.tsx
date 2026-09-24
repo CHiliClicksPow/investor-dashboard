@@ -21,7 +21,6 @@ export default function NavBar() {
         <Link href="/deals" style={styles.link}>Deals</Link>
         <Link href="/deals/new" style={styles.link}>New Deal</Link>
         <Link href="/import-investors" style={styles.link}>Import Investors</Link>
-        <Link href="/change-password" style={styles.link}>Change Password</Link>
       </div>
       <button onClick={signOut} style={styles.signOut}>Sign out</button>
     </div>
