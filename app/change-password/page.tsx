@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/components/NavBar';
 
-export default function ChangePasswordPage() {
+function ChangePasswordInner() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -108,5 +108,13 @@ export default function ChangePasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ChangePasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChangePasswordInner />
+    </Suspense>
   );
 }
