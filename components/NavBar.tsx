@@ -38,7 +38,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   left: { display: 'flex', alignItems: 'center', gap: 20 },
   brand: { color: '#fff', fontWeight: 700, fontSize: 15, marginRight: 8 },
-  logo: { height: 36, width: 'auto', marginRight: 8 },
+  logo: { height: 36, width: 'auto', marginRight: 8, filter: 'brightness(0) invert(1)' },
   link: { color: '#cbd5e1', textDecoration: 'none', fontSize: 14 },
   signOut: {
     background: 'transparent',
