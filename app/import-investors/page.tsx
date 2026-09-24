@@ -23,10 +23,11 @@ export default function ImportInvestorsPage() {
     setStatus('Reading file…');
 
     try {
-      const buffer = await file.arrayBuffer();
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      const input = isCsv ? await file.text() : await file.arrayBuffer();
 
       setStatus('Parsing sheets…');
-      const raw = parseWorkbook(buffer);
+      const raw = parseWorkbook(input);
 
       setStatus('Deduplicating…');
       const unique = dedupeRecords(raw);
@@ -92,16 +93,16 @@ export default function ImportInvestorsPage() {
       <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>Import Investors</h1>
       <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
-        Upload your investor list (the same Excel workbook, any number of sheets, or a
-        simple new sheet with columns like Investor, Sector, City, Country, Website,
-        LinkedIn, Contact Email). Everything is read and matched in your browser, then
+        Upload an Excel file (any number of sheets) or a CSV. Columns like Name/Investor,
+        Email, Sector, Amount, City, Country, Website, LinkedIn are automatically detected
+        and matched, whatever order they're in. Everything is read in your browser, then
         saved to the shared investor database — nothing is sent anywhere except your own
         Supabase project.
       </p>
 
       <input
         type="file"
-        accept=".xlsx,.xls"
+        accept=".xlsx,.xls,.csv"
         onChange={handleFile}
         disabled={busy}
         style={{ marginBottom: 20 }}
