@@ -28,7 +28,7 @@ export default function HomePage() {
           {investorCount === null ? '…' : investorCount.toLocaleString()}
         </div>
         <div style={{ fontSize: 16, color: '#64748b', marginTop: 8, marginBottom: 48 }}>
-          Investors in your database
+          Investors onboarded
         </div>
 
         <button
