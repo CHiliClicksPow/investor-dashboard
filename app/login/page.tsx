@@ -49,6 +49,25 @@ export default function LoginPage() {
     router.push('/home');
   }
 
+  async function sendResetEmail() {
+    setError(null);
+    setInfo(null);
+    if (!email) {
+      setError('Enter your email above first.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setInfo(`Password reset steps sent to ${email}. Check the inbox.`);
+  }
+
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -56,7 +75,11 @@ export default function LoginPage() {
     const { error } =
       mode === 'password-signin'
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { password_updated_at: new Date().toISOString() } },
+          });
     setLoading(false);
     if (error) {
       setError(error.message);
@@ -123,10 +146,16 @@ export default function LoginPage() {
             <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <label style={styles.label}>Password</label>
             <input style={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+            {info && <p style={styles.info}>{info}</p>}
             {error && <p style={styles.error}>{error}</p>}
             <button style={styles.button} type="submit" disabled={loading}>
               {loading ? 'Please wait…' : mode === 'password-signin' ? 'Sign in' : 'Create account'}
             </button>
+            {mode === 'password-signin' && (
+              <button type="button" style={{ ...styles.linkButton, marginTop: 10 }} onClick={sendResetEmail} disabled={loading}>
+                Forgot password? Email me the steps
+              </button>
+            )}
           </form>
         )}
 
