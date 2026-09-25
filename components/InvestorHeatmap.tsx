@@ -45,14 +45,49 @@ const ALIASES: Record<string, string> = {
   nz: 'New Zealand', th: 'Thailand', kw: 'Kuwait', om: 'Oman', jo: 'Jordan',
 };
 
+// Patterns matched with word-boundary regex against the cleaned string —
+// handles messy real data like "New York, USA" or "Dubai, U.A.E." or
+// "United States of America".
+const PATTERNS: [RegExp, string][] = [
+  [/\b(united states|usa|u s a|america)\b/i, 'United States'],
+  [/\bus\b/i, 'United States'],
+  [/\b(united kingdom|uk|england|britain|scotland|wales)\b/i, 'United Kingdom'],
+  [/\b(united arab emirates|uae|u a e|dubai|abu dhabi|sharjah)\b/i, 'United Arab Emirates'],
+  [/\bindia\b/i, 'India'], [/\bcanada\b/i, 'Canada'], [/\bsingapore\b/i, 'Singapore'],
+  [/\baustralia\b/i, 'Australia'], [/\bgermany\b/i, 'Germany'], [/\bfrance\b/i, 'France'],
+  [/\bchina\b/i, 'China'], [/\bjapan\b/i, 'Japan'], [/\bhong kong\b/i, 'Hong Kong'],
+  [/\bswitzerland\b/i, 'Switzerland'], [/\bnetherlands\b/i, 'Netherlands'], [/\bisrael\b/i, 'Israel'],
+  [/\bsouth africa\b/i, 'South Africa'], [/\bbrazil\b/i, 'Brazil'], [/\bnigeria\b/i, 'Nigeria'],
+  [/\bkenya\b/i, 'Kenya'], [/\bbahamas\b/i, 'Bahamas'], [/\bmexico\b/i, 'Mexico'],
+  [/\bindonesia\b/i, 'Indonesia'], [/\bmalaysia\b/i, 'Malaysia'], [/\bvietnam\b/i, 'Vietnam'],
+  [/\bphilippines\b/i, 'Philippines'], [/\bsouth korea|korea\b/i, 'South Korea'], [/\bitaly\b/i, 'Italy'],
+  [/\bspain\b/i, 'Spain'], [/\bsweden\b/i, 'Sweden'], [/\bnorway\b/i, 'Norway'],
+  [/\bdenmark\b/i, 'Denmark'], [/\bireland\b/i, 'Ireland'], [/\bsaudi arabia|ksa\b/i, 'Saudi Arabia'],
+  [/\bqatar\b/i, 'Qatar'], [/\bbahrain\b/i, 'Bahrain'], [/\begypt\b/i, 'Egypt'],
+  [/\bturkey\b/i, 'Turkey'], [/\brussia\b/i, 'Russia'], [/\bpakistan\b/i, 'Pakistan'],
+  [/\bbangladesh\b/i, 'Bangladesh'], [/\bsri lanka\b/i, 'Sri Lanka'], [/\bnepal\b/i, 'Nepal'],
+  [/\bnew zealand\b/i, 'New Zealand'], [/\bthailand\b/i, 'Thailand'], [/\bkuwait\b/i, 'Kuwait'],
+  [/\boman\b/i, 'Oman'], [/\bjordan\b/i, 'Jordan'], [/\bluxembourg\b/i, 'Luxembourg'],
+  [/\bbelgium\b/i, 'Belgium'], [/\baustria\b/i, 'Austria'], [/\bportugal\b/i, 'Portugal'],
+  [/\bpoland\b/i, 'Poland'], [/\bfinland\b/i, 'Finland'], [/\bghana\b/i, 'Ghana'],
+  [/\brwanda\b/i, 'Rwanda'], [/\buganda\b/i, 'Uganda'], [/\btanzania\b/i, 'Tanzania'],
+  [/\bethiopia\b/i, 'Ethiopia'], [/\bcolombia\b/i, 'Colombia'], [/\bargentina\b/i, 'Argentina'],
+  [/\bchile\b/i, 'Chile'], [/\bperu\b/i, 'Peru'], [/\bcayman\b/i, 'Cayman Islands'],
+  [/\bvirgin islands\b/i, 'British Virgin Islands'], [/\bestonia\b/i, 'Estonia'], [/\blithuania\b/i, 'Lithuania'],
+];
+
 function normalize(raw: string): string | null {
-  const t = raw.trim();
-  if (!t) return null;
-  if (COUNTRY_COORDS[t]) return t;
-  const lower = t.toLowerCase();
+  const cleaned = raw.replace(/[.,]/g, '').trim();
+  if (!cleaned) return null;
+  if (COUNTRY_COORDS[cleaned]) return cleaned;
+  const lower = cleaned.toLowerCase();
   if (ALIASES[lower]) return ALIASES[lower];
   const titleMatch = Object.keys(COUNTRY_COORDS).find((c) => c.toLowerCase() === lower);
-  return titleMatch || null;
+  if (titleMatch) return titleMatch;
+  for (const [pattern, country] of PATTERNS) {
+    if (pattern.test(cleaned)) return country;
+  }
+  return null;
 }
 
 // Simple equirectangular projection onto a 960x480 box.
