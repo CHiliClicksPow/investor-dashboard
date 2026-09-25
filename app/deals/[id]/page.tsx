@@ -1,20 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/components/NavBar';
+import LoadingLogo from '@/components/LoadingLogo';
+
+function classifyInvestorType(type: string | null | undefined): 'VC' | 'Angels' | 'HNI' | 'Others' {
+  const t = (type || '').toLowerCase();
+  if (t.includes('angel')) return 'Angels';
+  if (t.includes('vc') || t.includes('venture')) return 'VC';
+  if (t.includes('hni') || t.includes('high net worth') || t.includes('family office')) return 'HNI';
+  return 'Others';
+}
 
 export default function DealDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const supabase = createClient();
 
   const [deal, setDeal] = useState<any>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [matching, setMatching] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeSummary, setAnalyzeSummary] = useState<string | null>(null);
+  const [lastMatchedAt, setLastMatchedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadDeal() {
@@ -38,7 +50,10 @@ export default function DealDetailPage() {
   async function runMatching() {
     setMatching(true);
     const { error } = await supabase.rpc('match_investors_for_deal', { p_deal_id: id });
-    if (!error) await loadMatches();
+    if (!error) {
+      await loadMatches();
+      setLastMatchedAt(new Date());
+    }
     setMatching(false);
   }
 
@@ -55,14 +70,32 @@ export default function DealDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analysis failed.');
       setAnalyzeSummary(
-        `AI read the deck/model and re-scored ${data.aiReviewedCount} of ${data.candidatePoolSize} candidate investors based on actual thesis fit.`
+        `AI (${data.provider}) read the deck/model and wrote the brief below. ${data.matchCount} investors matched using sector/stage/geography/ticket size.`
       );
       await Promise.all([loadDeal(), loadMatches()]);
-    } catch (err: any) {
-      setAnalyzeError(err.message);
+      setLastMatchedAt(new Date());
+    } catch {
+      // Keep this user-facing message simple — the underlying AI providers
+      // can be flaky (rate limits, temporary overload), and a raw error
+      // isn't useful to a non-technical user.
+      setAnalyzeError('AI brief — coming soon. This part is still being fine-tuned; the investor matches below still work normally.');
     } finally {
       setAnalyzing(false);
     }
+  }
+
+  async function deleteDeal() {
+    if (!confirm(`Delete "${deal.company_name}"? This can't be undone.`)) return;
+    setDeleting(true);
+    if (deal.pitch_deck_path) await supabase.storage.from('pitch-decks').remove([deal.pitch_deck_path]);
+    if (deal.financial_model_path) await supabase.storage.from('financial-models').remove([deal.financial_model_path]);
+    const { error } = await supabase.from('deals').delete().eq('id', id);
+    if (error) {
+      alert('Could not delete: ' + error.message);
+      setDeleting(false);
+      return;
+    }
+    router.push('/deals');
   }
 
   function downloadCsv() {
@@ -88,7 +121,7 @@ export default function DealDetailPage() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading) return <div><NavBar /><p style={{ padding: 24 }}>Loading…</p></div>;
+  if (loading) return <div><NavBar /><LoadingLogo label="Loading…" /></div>;
   if (!deal) return <div><NavBar /><p style={{ padding: 24 }}>Deal not found.</p></div>;
 
   const groups = ['Strong Match', 'Good Match', 'Possible Match'].map((cat) => ({
@@ -96,18 +129,35 @@ export default function DealDetailPage() {
     items: matches.filter((m) => m.category === cat),
   }));
 
+  const typeCounts = matches.reduce((acc: Record<string, number>, m) => {
+    const bucket = classifyInvestorType(m.investors.type);
+    acc[bucket] = (acc[bucket] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div>
       <NavBar />
       <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-        <h1 style={{ fontSize: 24, marginBottom: 4 }}>{deal.company_name}</h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 8 }}>{deal.one_liner}</p>
-        <p style={{ color: '#334155', fontSize: 13, marginBottom: 20 }}>
-          {[deal.sector, deal.stage, deal.geography].filter(Boolean).join(' · ')}
-          {deal.funding_ask ? ` · Asking $${Number(deal.funding_ask).toLocaleString()}` : ''}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 24, marginBottom: 4 }}>{deal.company_name}</h1>
+            <p style={{ color: '#64748b', fontSize: 14, marginBottom: 8 }}>{deal.one_liner}</p>
+            <p style={{ color: '#334155', fontSize: 13, marginBottom: 20 }}>
+              {[deal.sector, deal.stage, deal.geography].filter(Boolean).join(' · ')}
+              {deal.funding_ask ? ` · Asking $${Number(deal.funding_ask).toLocaleString()}` : ''}
+            </p>
+          </div>
+          <button
+            onClick={deleteDeal}
+            disabled={deleting}
+            style={{ background: '#fff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            {deleting ? 'Deleting…' : 'Delete deal'}
+          </button>
+        </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
           <button
             onClick={runMatching}
             disabled={matching}
@@ -138,16 +188,23 @@ export default function DealDetailPage() {
                 padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
               }}
             >
-              {analyzing ? 'AI is reading & matching…' : 'Analyze with AI'}
+              {analyzing ? 'AI is reading…' : 'Analyze with AI'}
             </button>
           )}
         </div>
 
+        {lastMatchedAt && (
+          <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>
+            Matches last updated {lastMatchedAt.toLocaleTimeString()}
+          </p>
+        )}
+
+        {analyzing && <LoadingLogo label="Reading pitch deck & financial model…" />}
         {analyzeSummary && <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 16 }}>{analyzeSummary}</p>}
-        {analyzeError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 16 }}>{analyzeError}</p>}
+        {analyzeError && <p style={{ color: '#b45309', background: '#fffbeb', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>{analyzeError}</p>}
 
         {deal.extracted_data && (
-          <div style={{ border: '1px solid #dbeafe', background: '#eff6ff', borderRadius: 10, padding: 18, marginBottom: 28 }}>
+          <div style={{ border: '1px solid #dbeafe', background: '#eff6ff', borderRadius: 10, padding: 18, marginBottom: 12 }}>
             <h2 style={{ fontSize: 15, marginBottom: 10, color: '#1e3a8a' }}>AI Company Brief</h2>
             {deal.extracted_data.one_liner && (
               <p style={{ fontSize: 14, color: '#0f172a', marginBottom: 10 }}>{deal.extracted_data.one_liner}</p>
@@ -178,10 +235,19 @@ export default function DealDetailPage() {
           </div>
         )}
 
+        {matches.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: '#475569', marginBottom: 28 }}>
+            <strong style={{ color: '#0f172a' }}>Matched investors by type:</strong>
+            {['VC', 'Angels', 'HNI', 'Others'].map((k) =>
+              typeCounts[k] ? <span key={k}>{k}: {typeCounts[k]}</span> : null
+            )}
+          </div>
+        )}
+
         {matches.length === 0 && !matching && (
           <p style={{ color: '#94a3b8', fontSize: 14 }}>
-            No matches yet — click the button above. This checks sector, stage, geography and
-            ticket size against your investor database.
+            No matches yet — click the button above. This checks sector (most important),
+            geography, ticket size, then stage against your investor database.
           </p>
         )}
 
