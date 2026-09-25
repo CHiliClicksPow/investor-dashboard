@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/components/NavBar';
+import LoadingLogo from '@/components/LoadingLogo';
 
 export default function NewDealPage() {
   const router = useRouter();
@@ -125,7 +126,7 @@ export default function NewDealPage() {
             <textarea style={{ ...inputStyle, minHeight: 90 }} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
 
-          <Field label="Pitch deck (PDF read automatically; PPTX stored but not yet read)">
+          <Field label="Pitch deck (PDF and PPTX read automatically)">
             <input type="file" accept=".pdf,.ppt,.pptx" onChange={(e) => setDeckFile(e.target.files?.[0] || null)} />
           </Field>
 
@@ -135,8 +136,10 @@ export default function NewDealPage() {
 
           {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
 
+          {analyzing && <LoadingLogo label="Reading pitch deck & writing brief…" />}
+
           <button type="submit" disabled={saving || analyzing} style={buttonStyle}>
-            {saving ? 'Saving…' : analyzing ? 'Reading pitch deck & writing brief…' : 'Create deal & find matches'}
+            {saving ? 'Saving…' : analyzing ? 'Please wait…' : 'Create deal & find matches'}
           </button>
         </form>
       </div>
