@@ -92,12 +92,27 @@ function extractJsonObject(text: string): any {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
-function extractJsonArray(text: string): any[] {
-  const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-  const start = cleaned.indexOf('[');
-  const end = cleaned.lastIndexOf(']');
-  if (start === -1 || end === -1) throw new Error('No JSON array found in AI response.');
-  return JSON.parse(cleaned.slice(start, end + 1));
+// PPTX files are ZIP archives of XML slides — pull the visible text out of
+// each slide's XML without needing a heavy/unreliable PPTX-specific library.
+async function extractPptxText(buf: Buffer): Promise<string> {
+  const JSZip = (await import('jszip')).default;
+  const zip = await JSZip.loadAsync(buf);
+  const slideFiles = Object.keys(zip.files)
+    .filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f))
+    .sort((a, b) => {
+      const na = parseInt(a.match(/slide(\d+)/)![1], 10);
+      const nb = parseInt(b.match(/slide(\d+)/)![1], 10);
+      return na - nb;
+    });
+
+  let text = '';
+  for (const f of slideFiles) {
+    const xml = await zip.files[f].async('text');
+    const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+    const slideText = matches.map((m) => m.replace(/<a:t>|<\/a:t>/g, '')).join(' ');
+    if (slideText.trim()) text += slideText + '\n\n';
+  }
+  return text;
 }
 
 export async function POST(req: Request) {
@@ -110,26 +125,32 @@ export async function POST(req: Request) {
     const { data: deal, error: dealErr } = await supabase.from('deals').select('*').eq('id', dealId).single();
     if (dealErr || !deal) return NextResponse.json({ error: 'Deal not found' }, { status: 404 });
 
-    // --- 1. Extract text from the pitch deck (PDF supported) ---
+    // --- 1. Extract text from the pitch deck (PDF and PPTX supported) ---
     let deckText = '';
     let deckNote = '';
     if (deal.pitch_deck_path) {
-      if (/\.pdf$/i.test(deal.pitch_deck_path)) {
+      const isPdf = /\.pdf$/i.test(deal.pitch_deck_path);
+      const isPptx = /\.pptx$/i.test(deal.pitch_deck_path);
+      if (isPdf || isPptx) {
         const { data: file, error: dlErr } = await supabase.storage.from('pitch-decks').download(deal.pitch_deck_path);
         if (!dlErr && file) {
           try {
             const buf = Buffer.from(await file.arrayBuffer());
-            // @ts-ignore - loaded dynamically at runtime to avoid a known
-            // build-time issue with this package's top-level debug code.
-            const { default: pdfParse } = await import('pdf-parse');
-            const parsed = await pdfParse(buf);
-            deckText = parsed.text.slice(0, 15000);
+            if (isPdf) {
+              // @ts-ignore - loaded dynamically at runtime to avoid a known
+              // build-time issue with this package's top-level debug code.
+              const { default: pdfParse } = await import('pdf-parse');
+              const parsed = await pdfParse(buf);
+              deckText = parsed.text.slice(0, 8000);
+            } else {
+              deckText = (await extractPptxText(buf)).slice(0, 8000);
+            }
           } catch {
             deckNote = 'Pitch deck was attached but could not be read.';
           }
         }
       } else {
-        deckNote = 'Pitch deck is attached but only PDF files can be read automatically right now (PowerPoint files are stored but not yet parsed).';
+        deckNote = 'Pitch deck is attached but only PDF and PPTX files can be read automatically right now (older .ppt files are stored but not yet parsed).';
       }
     }
 
@@ -144,9 +165,9 @@ export async function POST(req: Request) {
           const parts: string[] = [];
           for (const sheetName of wb.SheetNames.slice(0, 3)) {
             const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-            parts.push(`--- Sheet: ${sheetName} ---\n${csv.slice(0, 4000)}`);
+            parts.push(`--- Sheet: ${sheetName} ---\n${csv.slice(0, 2000)}`);
           }
-          financialText = parts.join('\n\n').slice(0, 12000);
+          financialText = parts.join('\n\n').slice(0, 5000);
         } catch {
           // ignore — proceed without financial data
         }
@@ -192,64 +213,20 @@ Based on everything above, respond with ONLY a raw JSON object (no markdown, no 
     await supabase.from('deals').update(updates).eq('id', dealId);
     const finalDeal = { ...deal, ...updates };
 
-    // --- 4. Run the existing rule-based match to build a candidate pool ---
+    // --- 4. Populate matches using the existing free, reliable rule-based matcher ---
+    // (No AI involved here — this is just the sector/stage/geography/ticket-size
+    // SQL scoring, which is fast and has no token limits to worry about.)
     await supabase.rpc('match_investors_for_deal', { p_deal_id: dealId });
 
-    const { data: candidates } = await supabase
+    const { count: matchCount } = await supabase
       .from('deal_matches')
-      .select('id, investor_id, match_score, investors(investor_name, description, industry_focus, stages, geographic_focus)')
-      .eq('deal_id', dealId)
-      .order('match_score', { ascending: false })
-      .limit(60);
-
-    let aiReviewedCount = 0;
-
-    if (candidates && candidates.length > 0) {
-      const investorList = candidates
-        .map((c: any) =>
-          `[id:${c.investor_id}] ${c.investors.investor_name} — Focus: ${c.investors.industry_focus || 'n/a'}; Stages: ${c.investors.stages || 'n/a'}; Geography: ${c.investors.geographic_focus || 'n/a'}; Thesis: ${(c.investors.description || '').slice(0, 500)}`
-        )
-        .join('\n');
-
-      const rankingPrompt = `You are a fundraising advisor matching a startup deal to the right investors based on genuine thesis fit, not just keyword overlap.
-
-DEAL SUMMARY:
-Company: ${finalDeal.company_name}
-One-liner: ${finalDeal.one_liner || ''}
-Sector: ${finalDeal.sector || ''}
-Stage: ${finalDeal.stage || ''}
-Geography: ${finalDeal.geography || ''}
-Funding ask: ${finalDeal.funding_ask || ''}
-Thesis summary: ${extracted.thesis_summary || ''}
-Key highlights: ${(extracted.key_highlights || []).join('; ')}
-
-CANDIDATE INVESTORS:
-${investorList}
-
-For EACH investor listed above, judge how genuinely well their stated thesis/focus fits this specific deal. Respond with ONLY a raw JSON array (no markdown), one object per investor, in this exact shape:
-[{"id": "<the id shown in brackets, exactly as given>", "score": <0-100 integer>, "rationale": "<one sentence, specific to this deal, max 25 words>"}]`;
-
-      const { text: rankingRaw } = await callAI(rankingPrompt);
-      const rankings = extractJsonArray(rankingRaw) as { id: string; score: number; rationale: string }[];
-
-      for (const r of rankings) {
-        if (!r.id) continue;
-        const scoreNormalized = Math.max(0, Math.min(4, r.score / 25));
-        const category = r.score >= 75 ? 'Strong Match' : r.score >= 45 ? 'Good Match' : 'Possible Match';
-        const { error: updErr } = await supabase
-          .from('deal_matches')
-          .update({ match_score: scoreNormalized, category, rationale: `AI: ${r.rationale}` })
-          .eq('deal_id', dealId)
-          .eq('investor_id', r.id);
-        if (!updErr) aiReviewedCount++;
-      }
-    }
+      .select('id', { count: 'exact', head: true })
+      .eq('deal_id', dealId);
 
     return NextResponse.json({
       success: true,
       extracted,
-      aiReviewedCount,
-      candidatePoolSize: candidates?.length || 0,
+      matchCount: matchCount || 0,
       provider: extractionProvider,
     });
   } catch (err: any) {
