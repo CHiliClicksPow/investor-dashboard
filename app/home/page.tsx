@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/components/NavBar';
 import PortfolioMarquee from '@/components/PortfolioMarquee';
-import InvestorHeatmap from '@/components/InvestorHeatmap';
 
 export default function HomePage() {
   const supabase = createClient();
@@ -41,10 +40,6 @@ export default function HomePage() {
         >
           Get Started
         </button>
-
-        <div style={{ width: '100%', maxWidth: 1000 }}>
-          <InvestorHeatmap />
-        </div>
 
         <div style={{ width: '100%', maxWidth: 1100 }}>
           <PortfolioMarquee />
