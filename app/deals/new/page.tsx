@@ -87,15 +87,15 @@ export default function NewDealPage() {
   return (
     <div>
       <NavBar />
-      <div style={{ maxWidth: 640, margin: '40px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-        <h1 style={{ fontSize: 22, marginBottom: 4 }}>New Deal</h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
+      <div style={{ maxWidth: 720, margin: '48px auto', fontFamily: "'DM Sans', system-ui, sans-serif", padding: 24 }}>
+        <h1 style={{ fontSize: 26, marginBottom: 6, fontFamily: "'Sora', sans-serif", color: '#23223A' }}>New Deal</h1>
+        <p style={{ color: '#6B6980', fontSize: 14, marginBottom: 28 }}>
           Fill in what you know. If you attach a pitch deck (PDF) or financial model
           (Excel), AI reads it automatically and writes a brief — sector, stage, traction,
           funding ask — right on the deal page, filling in anything you left blank.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ background: '#fff', border: '1px solid #ECEBF5', borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <Field label="Company name" required>
             <input style={inputStyle} value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
           </Field>
@@ -127,14 +127,18 @@ export default function NewDealPage() {
           </Field>
 
           <Field label="Pitch deck (PDF and PPTX read automatically)">
-            <input type="file" accept=".pdf,.ppt,.pptx" onChange={(e) => setDeckFile(e.target.files?.[0] || null)} />
+            <div style={dropZoneStyle}>
+              <input type="file" accept=".pdf,.ppt,.pptx" onChange={(e) => setDeckFile(e.target.files?.[0] || null)} style={{ fontSize: 13 }} />
+            </div>
           </Field>
 
           <Field label="Financial model (Excel/CSV, read automatically)">
-            <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setModelFile(e.target.files?.[0] || null)} />
+            <div style={dropZoneStyle}>
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setModelFile(e.target.files?.[0] || null)} style={{ fontSize: 13 }} />
+            </div>
           </Field>
 
-          {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
+          {error && <p style={{ color: '#C0392B', fontSize: 13 }}>{error}</p>}
 
           {analyzing && <LoadingLogo label="Reading pitch deck & writing brief…" />}
 
@@ -150,7 +154,7 @@ export default function NewDealPage() {
 function Field({ label, required, children, style }: any) {
   return (
     <div style={style}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: '#6B6980', display: 'block', marginBottom: 8, fontFamily: "'Sora', sans-serif", letterSpacing: '0.02em' }}>
         {label}{required && ' *'}
       </label>
       {children}
@@ -158,22 +162,32 @@ function Field({ label, required, children, style }: any) {
   );
 }
 
+const dropZoneStyle: React.CSSProperties = {
+  border: '2px dashed #D9D5F5',
+  background: '#FAF9FE',
+  borderRadius: 12,
+  padding: '16px 18px',
+};
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  border: '1px solid #cbd5e1',
-  borderRadius: 8,
-  padding: '10px 12px',
+  border: '1px solid #E4E2F2',
+  borderRadius: 10,
+  padding: '12px 16px',
   fontSize: 14,
   boxSizing: 'border-box',
+  fontFamily: "'DM Sans', sans-serif",
+  color: '#23223A',
 };
 
 const buttonStyle: React.CSSProperties = {
-  background: '#0f172a',
+  background: '#4F3FE0',
   color: '#fff',
   border: 'none',
-  borderRadius: 8,
-  padding: '12px',
+  borderRadius: 10,
+  padding: '14px',
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 700,
   cursor: 'pointer',
+  fontFamily: "'Sora', sans-serif",
 };
