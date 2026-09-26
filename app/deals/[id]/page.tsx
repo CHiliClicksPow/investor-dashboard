@@ -277,11 +277,22 @@ export default function DealDetailPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 {items.map((m) => (
                   <div key={m.id} style={{ background: '#fff', border: '1px solid #ECEBF5', borderRadius: 16, padding: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#EDEBFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4F3FE0" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#EDEBFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4F3FE0" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 15, fontFamily: sora }}>{m.investors.investor_name}</div>
                       </div>
-                      <div style={{ fontWeight: 700, fontSize: 15, fontFamily: sora }}>{m.investors.investor_name}</div>
+                      <a
+                        href={m.investors.linkedin || 'https://www.linkedin.com/'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={m.investors.linkedin ? 'View LinkedIn profile' : 'Open LinkedIn'}
+                        style={{ width: 30, height: 30, borderRadius: 8, background: '#EDEBFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#4F3FE0"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.14 1.45-2.14 2.94v5.66H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
+                      </a>
                     </div>
                     <div style={{ fontSize: 12, color: '#6B6980', marginBottom: 8 }}>
                       {[m.investors.type, m.investors.country].filter(Boolean).join(' · ')}
