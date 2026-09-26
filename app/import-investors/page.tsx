@@ -90,9 +90,12 @@ export default function ImportInvestorsPage() {
   return (
     <div>
       <NavBar />
-      <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Import Investors</h1>
-      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', fontFamily: "'DM Sans', system-ui, sans-serif", padding: '72px 24px', textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: 16, background: '#EDEBFC', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4F3FE0" strokeWidth="2"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 21h16"/></svg>
+      </div>
+      <h1 style={{ fontSize: 26, marginBottom: 8, fontFamily: "'Sora', sans-serif", color: '#23223A' }}>Import Investors</h1>
+      <p style={{ color: '#6B6980', fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
         Upload an Excel file (any number of sheets) or a CSV. Columns like Name/Investor,
         Email, Sector, Amount, City, Country, Website, LinkedIn are automatically detected
         and matched, whatever order they're in. Everything is read in your browser, then
@@ -100,22 +103,24 @@ export default function ImportInvestorsPage() {
         Supabase project.
       </p>
 
-      <input
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        onChange={handleFile}
-        disabled={busy}
-        style={{ marginBottom: 20 }}
-      />
+      <div style={{ border: '2px dashed #D9D5F5', background: '#FAF9FE', borderRadius: 20, padding: 40 }}>
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleFile}
+          disabled={busy}
+          style={{ fontSize: 14 }}
+        />
+      </div>
 
-      {status && <p style={{ fontSize: 14, color: '#334155' }}>{status}</p>}
+      {status && <p style={{ fontSize: 14, color: '#4B4860', marginTop: 20 }}>{status}</p>}
 
       {progress && (
-        <div style={{ background: '#e2e8f0', borderRadius: 8, height: 10, overflow: 'hidden', marginTop: 8 }}>
+        <div style={{ background: '#ECEBF5', borderRadius: 8, height: 10, overflow: 'hidden', marginTop: 12 }}>
           <div
             style={{
               width: `${(progress.done / progress.total) * 100}%`,
-              background: '#0f172a',
+              background: '#4F3FE0',
               height: '100%',
               transition: 'width 0.2s',
             }}
@@ -123,13 +128,13 @@ export default function ImportInvestorsPage() {
         </div>
       )}
       {progress && (
-        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
+        <p style={{ fontSize: 12, color: '#9997AC', marginTop: 6 }}>
           {progress.done.toLocaleString()} / {progress.total.toLocaleString()}
         </p>
       )}
 
       {summary && (
-        <p style={{ marginTop: 20, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>{summary}</p>
+        <p style={{ marginTop: 20, fontSize: 14, fontWeight: 700, color: '#4F3FE0', fontFamily: "'Sora', sans-serif" }}>{summary}</p>
       )}
       </div>
     </div>
