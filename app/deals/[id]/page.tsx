@@ -75,9 +75,6 @@ export default function DealDetailPage() {
       await Promise.all([loadDeal(), loadMatches()]);
       setLastMatchedAt(new Date());
     } catch {
-      // Keep this user-facing message simple — the underlying AI providers
-      // can be flaky (rate limits, temporary overload), and a raw error
-      // isn't useful to a non-technical user.
       setAnalyzeError('AI brief — coming soon. This part is still being fine-tuned; the investor matches below still work normally.');
     } finally {
       setAnalyzing(false);
@@ -129,52 +126,68 @@ export default function DealDetailPage() {
     items: matches.filter((m) => m.category === cat),
   }));
 
+  const badgeColor: Record<string, { bg: string; fg: string }> = {
+    'Strong Match': { bg: '#EDEBFC', fg: '#4F3FE0' },
+    'Good Match': { bg: '#FDF0E4', fg: '#B4650F' },
+    'Possible Match': { bg: '#F1F0F5', fg: '#6B6980' },
+  };
+
   const typeCounts = matches.reduce((acc: Record<string, number>, m) => {
     const bucket = classifyInvestorType(m.investors.type);
     acc[bucket] = (acc[bucket] || 0) + 1;
     return acc;
   }, {});
 
+  const sora = "'Sora', system-ui, sans-serif";
+  const dmSans = "'DM Sans', system-ui, sans-serif";
+
   return (
     <div>
       <NavBar />
-      <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <h1 style={{ fontSize: 24, marginBottom: 4 }}>{deal.company_name}</h1>
-            <p style={{ color: '#64748b', fontSize: 14, marginBottom: 8 }}>{deal.one_liner}</p>
-            <p style={{ color: '#334155', fontSize: 13, marginBottom: 20 }}>
-              {[deal.sector, deal.stage, deal.geography].filter(Boolean).join(' · ')}
-              {deal.funding_ask ? ` · Asking $${Number(deal.funding_ask).toLocaleString()}` : ''}
-            </p>
+
+      {/* Gradient hero */}
+      <div style={{ background: 'linear-gradient(120deg, #241454 0%, #4F3FE0 100%)', padding: '40px 24px 48px', color: '#fff' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: sora, fontSize: 36, fontWeight: 700 }}>{deal.company_name}</div>
+              {deal.one_liner && <p style={{ color: '#D8D3F8', fontSize: 15, marginTop: 8, maxWidth: 520 }}>{deal.one_liner}</p>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
+                {[deal.sector, deal.stage, deal.geography].filter(Boolean).map((t, i) => (
+                  <span key={i} style={{ background: 'rgba(255,255,255,0.14)', padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>{t}</span>
+                ))}
+                {deal.funding_ask && (
+                  <span style={{ background: 'rgba(255,255,255,0.14)', padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                    Asking ${Number(deal.funding_ask).toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={deleteDeal}
+              disabled={deleting}
+              style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: dmSans }}
+            >
+              {deleting ? 'Deleting…' : 'Delete deal'}
+            </button>
           </div>
-          <button
-            onClick={deleteDeal}
-            disabled={deleting}
-            style={{ background: '#fff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
-            {deleting ? 'Deleting…' : 'Delete deal'}
-          </button>
         </div>
+      </div>
+
+      <div style={{ maxWidth: 900, margin: '0 auto', fontFamily: dmSans, padding: '32px 24px', color: '#23223A' }}>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
           <button
             onClick={runMatching}
             disabled={matching}
-            style={{
-              background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}
+            style={{ background: '#4F3FE0', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: sora }}
           >
             {matching ? 'Matching…' : matches.length ? 'Re-run matching' : 'Find matching investors'}
           </button>
           {matches.length > 0 && (
             <button
               onClick={downloadCsv}
-              style={{
-                background: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8,
-                padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              }}
+              style={{ background: '#fff', color: '#4F3FE0', border: '1px solid #E4E2F2', borderRadius: 10, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: sora }}
             >
               Download {matches.length} matches (CSV)
             </button>
@@ -183,10 +196,7 @@ export default function DealDetailPage() {
             <button
               onClick={analyzeWithAI}
               disabled={analyzing}
-              style={{
-                background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8,
-                padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              }}
+              style={{ background: '#23223A', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: sora }}
             >
               {analyzing ? 'AI is reading…' : 'Analyze with AI'}
             </button>
@@ -194,22 +204,22 @@ export default function DealDetailPage() {
         </div>
 
         {lastMatchedAt && (
-          <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20 }}>
+          <p style={{ fontSize: 12, color: '#9997AC', marginBottom: 20 }}>
             Matches last updated {lastMatchedAt.toLocaleTimeString()}
           </p>
         )}
 
         {analyzing && <LoadingLogo label="Reading pitch deck & financial model…" />}
-        {analyzeSummary && <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 16 }}>{analyzeSummary}</p>}
-        {analyzeError && <p style={{ color: '#b45309', background: '#fffbeb', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>{analyzeError}</p>}
+        {analyzeSummary && <p style={{ color: '#1E8A4C', fontSize: 13, marginBottom: 16 }}>{analyzeSummary}</p>}
+        {analyzeError && <p style={{ color: '#B4650F', background: '#FDF0E4', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 16 }}>{analyzeError}</p>}
 
         {deal.extracted_data && (
-          <div style={{ border: '1px solid #dbeafe', background: '#eff6ff', borderRadius: 10, padding: 18, marginBottom: 12 }}>
-            <h2 style={{ fontSize: 15, marginBottom: 10, color: '#1e3a8a' }}>AI Company Brief</h2>
+          <div style={{ border: '1px solid #ECEBF5', background: '#FAF9FE', borderRadius: 16, padding: 22, marginBottom: 20 }}>
+            <h2 style={{ fontSize: 15, marginBottom: 10, color: '#4F3FE0', fontFamily: sora }}>AI Company Brief</h2>
             {deal.extracted_data.one_liner && (
-              <p style={{ fontSize: 14, color: '#0f172a', marginBottom: 10 }}>{deal.extracted_data.one_liner}</p>
+              <p style={{ fontSize: 14, color: '#23223A', marginBottom: 10 }}>{deal.extracted_data.one_liner}</p>
             )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 18px', fontSize: 13, color: '#334155', marginBottom: 10 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 18px', fontSize: 13, color: '#4B4860', marginBottom: 10 }}>
               {deal.extracted_data.sector && <span><strong>Sector:</strong> {deal.extracted_data.sector}</span>}
               {deal.extracted_data.stage && <span><strong>Stage:</strong> {deal.extracted_data.stage}</span>}
               {deal.extracted_data.geography && <span><strong>Geography:</strong> {deal.extracted_data.geography}</span>}
@@ -219,8 +229,8 @@ export default function DealDetailPage() {
             </div>
             {Array.isArray(deal.extracted_data.key_highlights) && deal.extracted_data.key_highlights.length > 0 && (
               <div style={{ marginBottom: 10 }}>
-                <strong style={{ fontSize: 13, color: '#1e3a8a' }}>Traction / highlights:</strong>
-                <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 13, color: '#334155' }}>
+                <strong style={{ fontSize: 13, color: '#4F3FE0', fontFamily: sora }}>Traction / highlights:</strong>
+                <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 13, color: '#4B4860' }}>
                   {deal.extracted_data.key_highlights.map((h: string, i: number) => (
                     <li key={i} style={{ marginBottom: 3 }}>{h}</li>
                   ))}
@@ -228,7 +238,7 @@ export default function DealDetailPage() {
               </div>
             )}
             {deal.extracted_data.thesis_summary && (
-              <p style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', marginTop: 8 }}>
+              <p style={{ fontSize: 13, color: '#6B6980', fontStyle: 'italic', marginTop: 8 }}>
                 {deal.extracted_data.thesis_summary}
               </p>
             )}
@@ -236,16 +246,20 @@ export default function DealDetailPage() {
         )}
 
         {matches.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: '#475569', marginBottom: 28 }}>
-            <strong style={{ color: '#0f172a' }}>Matched investors by type:</strong>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 12px', marginBottom: 28, alignItems: 'center' }}>
+            <strong style={{ color: '#23223A', fontSize: 13, fontFamily: sora, marginRight: 4 }}>By type:</strong>
             {['VC', 'Angels', 'HNI', 'Others'].map((k) =>
-              typeCounts[k] ? <span key={k}>{k}: {typeCounts[k]}</span> : null
+              typeCounts[k] ? (
+                <span key={k} style={{ background: '#F1F0F5', color: '#4B4860', padding: '5px 12px', borderRadius: 14, fontSize: 12, fontWeight: 600 }}>
+                  {k}: {typeCounts[k]}
+                </span>
+              ) : null
             )}
           </div>
         )}
 
         {matches.length === 0 && !matching && (
-          <p style={{ color: '#94a3b8', fontSize: 14 }}>
+          <p style={{ color: '#9997AC', fontSize: 14 }}>
             No matches yet — click the button above. This checks sector (most important),
             geography, ticket size, then stage against your investor database.
           </p>
@@ -253,21 +267,29 @@ export default function DealDetailPage() {
 
         {groups.map(({ cat, items }) =>
           items.length ? (
-            <div key={cat} style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 16, marginBottom: 10 }}>
-                {cat} <span style={{ color: '#94a3b8', fontWeight: 400 }}>({items.length})</span>
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div key={cat} style={{ marginBottom: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <span style={{ background: badgeColor[cat].bg, color: badgeColor[cat].fg, padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 700, fontFamily: sora }}>
+                  {cat}
+                </span>
+                <span style={{ color: '#9997AC', fontSize: 13 }}>{items.length}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 {items.map((m) => (
-                  <div key={m.id} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: 14 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{m.investors.investor_name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                  <div key={m.id} style={{ background: '#fff', border: '1px solid #ECEBF5', borderRadius: 16, padding: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#EDEBFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4F3FE0" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: 15, fontFamily: sora }}>{m.investors.investor_name}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#6B6980', marginBottom: 8 }}>
                       {[m.investors.type, m.investors.country].filter(Boolean).join(' · ')}
                       {m.investors.email ? ` · ${m.investors.email}` : ''}
                     </div>
-                    <div style={{ fontSize: 12, color: '#0f172a', marginTop: 6 }}>{m.rationale}</div>
+                    <div style={{ fontSize: 12, color: '#4F3FE0', marginBottom: 8, fontWeight: 600 }}>{m.rationale}</div>
                     {m.investors.description && (
-                      <div style={{ fontSize: 12, color: '#475569', marginTop: 6, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 12, color: '#6B6980', lineHeight: 1.5 }}>
                         {m.investors.description.slice(0, 220)}
                         {m.investors.description.length > 220 ? '…' : ''}
                       </div>
