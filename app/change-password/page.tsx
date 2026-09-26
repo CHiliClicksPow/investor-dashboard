@@ -86,16 +86,16 @@ function ChangePasswordInner() {
   return (
     <div>
       <NavBar />
-      <div style={{ maxWidth: 420, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-        <h1 style={{ fontSize: 22, marginBottom: 4 }}>Change Password</h1>
+      <div style={{ maxWidth: 420, margin: '60px auto', fontFamily: "'DM Sans', system-ui, sans-serif", padding: 24 }}>
+        <h1 style={{ fontSize: 26, marginBottom: 6, fontFamily: "'Sora', sans-serif", color: '#23223A' }}>Change Password</h1>
 
         {expired && (
-          <p style={{ background: '#fef3c7', color: '#92400e', fontSize: 13, padding: '10px 14px', borderRadius: 8, marginBottom: 20 }}>
+          <p style={{ background: '#fef3c7', color: '#92400e', fontSize: 13, padding: '10px 14px', borderRadius: 10, marginBottom: 20 }}>
             Your password is 30 days old — for security, please set a new one to continue.
           </p>
         )}
 
-        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
+        <p style={{ color: '#6B6980', fontSize: 14, marginBottom: 24 }}>
           For security, changing the password requires proving access to {ALLOWED_EMAIL} first —
           just being logged in isn't enough.
         </p>
@@ -104,7 +104,7 @@ function ChangePasswordInner() {
           <button
             onClick={sendVerificationCode}
             disabled={loading}
-            style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            style={{ background: '#4F3FE0', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             {loading ? 'Sending…' : `Send verification code to ${ALLOWED_EMAIL}`}
           </button>
@@ -112,24 +112,24 @@ function ChangePasswordInner() {
 
         {step === 'verify-code' && (
           <form onSubmit={verifyCode} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {info && <p style={{ color: '#16a34a', fontSize: 13 }}>{info}</p>}
+            {info && <p style={{ color: '#1E8A4C', fontSize: 13 }}>{info}</p>}
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#6B6980', display: 'block', marginBottom: 6 }}>
                 6-digit code (if the email showed a link instead, click that, then come back and refresh this page)
               </label>
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', fontSize: 20, textAlign: 'center', letterSpacing: 4, boxSizing: 'border-box' }}
+                style={{ width: '100%', border: '1px solid #E4E2F2', borderRadius: 10, padding: '10px 12px', fontSize: 20, textAlign: 'center', letterSpacing: 4, boxSizing: 'border-box' }}
                 maxLength={6}
                 inputMode="numeric"
               />
             </div>
-            {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
+            {error && <p style={{ color: '#C0392B', fontSize: 13 }}>{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: '#4F3FE0', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
             >
               {loading ? 'Verifying…' : 'Verify code'}
             </button>
@@ -138,35 +138,35 @@ function ChangePasswordInner() {
 
         {step === 'set-password' && (
           <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ color: '#16a34a', fontSize: 13 }}>Email verified. Now set your new password.</p>
+            <p style={{ color: '#1E8A4C', fontSize: 13 }}>Email verified. Now set your new password.</p>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>New password</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#6B6980', display: 'block', marginBottom: 6 }}>New password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
+                style={{ width: '100%', border: '1px solid #E4E2F2', borderRadius: 10, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
                 minLength={8}
                 required
               />
             </div>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>Confirm new password</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#6B6980', display: 'block', marginBottom: 6 }}>Confirm new password</label>
               <input
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
+                style={{ width: '100%', border: '1px solid #E4E2F2', borderRadius: 10, padding: '10px 12px', fontSize: 14, boxSizing: 'border-box' }}
                 minLength={8}
                 required
               />
             </div>
-            {error && <p style={{ color: '#dc2626', fontSize: 13 }}>{error}</p>}
-            {success && <p style={{ color: '#16a34a', fontSize: 13 }}>Password updated successfully.</p>}
+            {error && <p style={{ color: '#C0392B', fontSize: 13 }}>{error}</p>}
+            {success && <p style={{ color: '#1E8A4C', fontSize: 13 }}>Password updated successfully.</p>}
             <button
               type="submit"
               disabled={loading}
-              style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: '#4F3FE0', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
             >
               {loading ? 'Saving…' : 'Update password'}
             </button>
