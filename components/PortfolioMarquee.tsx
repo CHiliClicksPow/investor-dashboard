@@ -4,7 +4,12 @@ const LOGOS = [
   'cmt', 'yalph', 'livwell', 'welspun', 'czarworkspace', 'sushinations', 'toysouk',
   'celebfie', 'impactleaders', 'tribe', 'britishcurryhut', 'studentqr', 'finmall',
   'timberwolf', 'dualamplifiedsound', 'monsoonsalon', 'accorto', 'delta', 'fineestates',
-  'starshine',
+  'starshine', 'roopya', 'pikndel1', 'kyteenergy', 'credexon', 'watchyourhealth',
+  'klassroom', 'dochome', 'mitra', 'carexpro', 'ezyschooling', 'aticx', 'phleboindia',
+  'clayco', 'maate', 'artham', 'pickkup', 'prabhubhakti', 'greenjams', 'powerbot',
+  'praushbeauty', 'daikcell', 'sabbyelectric', 'stylox1', '10on10foods', 'finbros',
+  'gigahelps', 'sharktankindia', 'pureflow', 'sneakinn', 'refit', 'thp',
+  'pitchtogetrich', 'bananaclub',
 ];
 
 export default function PortfolioMarquee({ heading = true }: { heading?: boolean }) {
@@ -13,7 +18,7 @@ export default function PortfolioMarquee({ heading = true }: { heading?: boolean
   return (
     <div style={{ padding: '32px 0', overflow: 'hidden' }}>
       {heading && (
-        <h2 style={{ textAlign: 'center', fontSize: 18, color: '#0f172a', marginBottom: 24, fontFamily: 'system-ui, sans-serif' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#23223A', marginBottom: 28, fontFamily: "'Sora', system-ui, sans-serif" }}>
           Latest funding rounds and success of our portfolio companies
         </h2>
       )}
