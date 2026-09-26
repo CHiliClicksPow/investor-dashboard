@@ -96,8 +96,9 @@ export default function LoginPage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <img src="/logo.png" alt="Pitch Our Way" style={{ height: 72, width: 'auto', maxWidth: 200, alignSelf: 'center', marginBottom: 8, objectFit: 'contain' }} />
-        <p style={styles.subtitle}>Investor Matching Platform</p>
+        <img src="/logo.png" alt="Pitch Our Way" style={{ height: 56, width: 'auto', maxWidth: 200, alignSelf: 'center', marginBottom: 24, objectFit: 'contain' }} />
+        <h1 style={styles.title}>Welcome back</h1>
+        <p style={styles.subtitle}>Sign in to Investor Matching</p>
 
         {(mode === 'otp-request' || mode === 'otp-verify') && (
           <form onSubmit={mode === 'otp-request' ? sendCode : verifyCode}>
@@ -185,15 +186,15 @@ export default function LoginPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', fontFamily: 'system-ui, sans-serif', padding: 16, boxSizing: 'border-box' },
-  card: { width: '100%', maxWidth: 380, background: '#fff', borderRadius: 12, padding: 28, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', boxSizing: 'border-box' },
-  title: { margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a' },
-  subtitle: { margin: '4px 0 24px', color: '#64748b', fontSize: 14 },
-  label: { fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6, display: 'block' },
-  input: { width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 14, boxSizing: 'border-box' },
-  button: { width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  linkButton: { background: 'none', border: 'none', color: '#2563eb', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: 0 },
-  error: { color: '#dc2626', fontSize: 13, marginBottom: 12 },
-  info: { color: '#16a34a', fontSize: 13, marginBottom: 12 },
-  note: { fontSize: 12, color: '#94a3b8', marginTop: 18, lineHeight: 1.5 },
+  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(120deg, #241454 0%, #4F3FE0 100%)', fontFamily: "'DM Sans', system-ui, sans-serif", padding: 16, boxSizing: 'border-box' },
+  card: { width: '100%', maxWidth: 400, background: '#fff', borderRadius: 20, padding: 40, display: 'flex', flexDirection: 'column', boxShadow: '0 30px 70px rgba(20,10,60,0.35)', boxSizing: 'border-box' },
+  title: { margin: 0, fontSize: 22, fontWeight: 700, color: '#23223A', fontFamily: "'Sora', sans-serif" },
+  subtitle: { margin: '4px 0 28px', color: '#6B6980', fontSize: 14 },
+  label: { fontSize: 12, fontWeight: 600, color: '#6B6980', marginBottom: 8, display: 'block', fontFamily: "'Sora', sans-serif", letterSpacing: '0.02em' },
+  input: { width: '100%', border: '1px solid #E4E2F2', borderRadius: 10, padding: '13px 16px', marginBottom: 20, fontSize: 14, boxSizing: 'border-box', fontFamily: "'DM Sans', sans-serif", color: '#23223A' },
+  button: { width: '100%', background: '#4F3FE0', color: '#fff', border: 'none', borderRadius: 10, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Sora', sans-serif" },
+  linkButton: { background: 'none', border: 'none', color: '#4F3FE0', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 },
+  error: { color: '#C0392B', fontSize: 13, marginBottom: 12 },
+  info: { color: '#1E8A4C', fontSize: 13, marginBottom: 12 },
+  note: { fontSize: 12, color: '#9997AC', marginTop: 20, lineHeight: 1.5 },
 };
