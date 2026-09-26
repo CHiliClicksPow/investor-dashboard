@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function NavBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   async function signOut() {
@@ -13,15 +14,31 @@ export default function NavBar() {
     router.push('/login');
   }
 
+  const links = [
+    { href: '/home', label: 'Home' },
+    { href: '/deals', label: 'Deals' },
+    { href: '/deals/new', label: 'New Deal' },
+    { href: '/import-investors', label: 'Import Investors' },
+    { href: '/investors/new', label: 'Add Investor' },
+  ];
+
   return (
-    <div style={styles.bar}>
+    <div style={styles.bar} className="pow-nav-bar">
       <div style={styles.left} className="pow-nav-links">
         <img src="/logo.png" alt="Pitch Our Way" style={styles.logo} />
-        <Link href="/home" style={styles.link}>Home</Link>
-        <Link href="/deals" style={styles.link}>Deals</Link>
-        <Link href="/deals/new" style={styles.link}>New Deal</Link>
-        <Link href="/import-investors" style={styles.link}>Import Investors</Link>
-        <Link href="/investors/new" style={styles.link}>Add Investor</Link>
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            style={{
+              ...styles.link,
+              color: pathname === l.href ? '#4F3FE0' : '#6B6980',
+              fontWeight: pathname === l.href ? 700 : 600,
+            }}
+          >
+            {l.label.toUpperCase()}
+          </Link>
+        ))}
       </div>
       <button onClick={signOut} style={styles.signOut}>Sign out</button>
       <style>{`
@@ -40,21 +57,29 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     rowGap: 10,
-    padding: '14px 16px',
-    background: '#0f172a',
-    fontFamily: 'system-ui, sans-serif',
+    padding: '18px 32px',
+    background: '#FFFFFF',
+    borderBottom: '1px solid #ECEBF5',
+    fontFamily: "'DM Sans', system-ui, sans-serif",
   },
-  left: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20, rowGap: 10 },
-  brand: { color: '#fff', fontWeight: 700, fontSize: 15, marginRight: 8 },
-  logo: { height: 32, width: 'auto', marginRight: 4, filter: 'brightness(0) invert(1)' },
-  link: { color: '#cbd5e1', textDecoration: 'none', fontSize: 14, whiteSpace: 'nowrap' },
+  left: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 28, rowGap: 10 },
+  logo: { height: 26, width: 'auto', marginRight: 6 },
+  link: {
+    textDecoration: 'none',
+    fontSize: 12.5,
+    whiteSpace: 'nowrap',
+    fontFamily: "'Sora', system-ui, sans-serif",
+    letterSpacing: '0.03em',
+  },
   signOut: {
-    background: 'transparent',
-    border: '1px solid #475569',
-    color: '#cbd5e1',
-    borderRadius: 6,
-    padding: '6px 12px',
-    fontSize: 13,
+    background: '#23223A',
+    border: 'none',
+    color: '#fff',
+    borderRadius: 8,
+    padding: '9px 18px',
+    fontSize: 12.5,
+    fontWeight: 700,
+    fontFamily: "'Sora', system-ui, sans-serif",
     cursor: 'pointer',
     flexShrink: 0,
   },
