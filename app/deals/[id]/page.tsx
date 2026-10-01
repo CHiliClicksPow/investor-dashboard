@@ -269,7 +269,9 @@ export default function DealDetailPage() {
 
         {matches.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
-            {(['All', 'Strong Match', 'Good Match', 'Possible Match'] as const).map((cat) => {
+            {(['All', 'Strong Match', 'Good Match', 'Possible Match'] as const)
+              .filter((cat) => cat === 'All' || (groups.find((g) => g.cat === cat)?.items.length || 0) > 0)
+              .map((cat) => {
               const isAll = cat === 'All';
               const count = isAll ? matches.length : groups.find((g) => g.cat === cat)?.items.length || 0;
               const active = isAll ? selectedCategory === null : selectedCategory === cat;
