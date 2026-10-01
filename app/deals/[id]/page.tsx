@@ -28,6 +28,7 @@ export default function DealDetailPage() {
   const [analyzeSummary, setAnalyzeSummary] = useState<string | null>(null);
   const [lastMatchedAt, setLastMatchedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   async function loadDeal() {
     const { data } = await supabase.from('deals').select('*').eq('id', id).single();
@@ -49,6 +50,7 @@ export default function DealDetailPage() {
 
   async function runMatching() {
     setMatching(true);
+    setSelectedCategory(null);
     const { error } = await supabase.rpc('match_investors_for_deal', { p_deal_id: id });
     if (!error) {
       await loadMatches();
@@ -265,7 +267,37 @@ export default function DealDetailPage() {
           </p>
         )}
 
-        {groups.map(({ cat, items }) =>
+        {matches.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+            {(['All', 'Strong Match', 'Good Match', 'Possible Match'] as const).map((cat) => {
+              const isAll = cat === 'All';
+              const count = isAll ? matches.length : groups.find((g) => g.cat === cat)?.items.length || 0;
+              const active = isAll ? selectedCategory === null : selectedCategory === cat;
+              const colors = isAll ? { bg: '#23223A', fg: '#fff' } : badgeColor[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(isAll ? null : cat)}
+                  style={{
+                    background: active ? colors.bg : '#fff',
+                    color: active ? colors.fg : '#6B6980',
+                    border: active ? 'none' : '1px solid #E4E2F2',
+                    padding: '9px 18px',
+                    borderRadius: 20,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: sora,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {cat} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {groups.filter(({ cat }) => selectedCategory === null || cat === selectedCategory).map(({ cat, items }) =>
           items.length ? (
             <div key={cat} style={{ marginBottom: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
